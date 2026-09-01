@@ -4,29 +4,53 @@ import React, { useState } from 'react';
 import { format, subYears, addDays, subDays } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+interface LocationInfo {
+  lat: number;
+  lon: number;
+  name: string;
+}
+
+interface PrimaryData {
+  times: string[];
+  temps: number[];
+  startDate: Date;
+  endDate: Date;
+}
+
+interface MergedChartPoint {
+  dateLabel: string;
+  primaryVal: number;
+  histVal: number;
+}
+
 export default function WeatherTimeMachine() {
-  const [query, setQuery] = useState('');
-  const [location, setLocation] = useState(null); // { lat, lon, name }
+  const [query, setQuery] = useState<string>('');
+  const [location, setLocation] = useState<LocationInfo | null>(null);
   
   // timeframe: 'forecast' (next 10 days) | 'past2weeks' (previous 14 days)
-  const [timeframe, setTimeframe] = useState('forecast');
+  const [timeframe, setTimeframe] = useState<'forecast' | 'past2weeks'>('forecast');
 
   // compareMode: 'single' | 'avg'
-  const [compareMode, setCompareMode] = useState('single');
-  const [yearsAgo, setYearsAgo] = useState(1); // 1-30 years ago
-  const [avgSpan, setAvgSpan] = useState(5); // 5, 10, 20, 30 years
+  const [compareMode, setCompareMode] = useState<'single' | 'avg'>('single');
+  const [yearsAgo, setYearsAgo] = useState<number>(1); // 1-30 years ago
+  const [avgSpan, setAvgSpan] = useState<number>(5); // 5, 10, 20, 30 years
 
-  const [primaryDailyData, setPrimaryDailyData] = useState(null); // { times: [], temps: [] }
-  const [chartData, setChartData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [tempDiff, setTempDiff] = useState(null);
+  const [primaryDailyData, setPrimaryDailyData] = useState<PrimaryData | null>(null);
+  const [chartData, setChartData] = useState<MergedChartPoint[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [tempDiff, setTempDiff] = useState<string | null>(null);
 
   const currentYear = new Date().getFullYear();
   const dateFormat = 'yyyy-MM-dd';
 
   // Helper to fetch historical daily max temperatures for a specific date window
-  const fetchHistoricalRange = async (lat, lon, startDate, endDate) => {
+  const fetchHistoricalRange = async (
+    lat: number,
+    lon: number,
+    startDate: Date,
+    endDate: Date
+  ): Promise<number[]> => {
     const res = await fetch(
       `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${format(
         startDate,
@@ -38,7 +62,11 @@ export default function WeatherTimeMachine() {
   };
 
   // Helper to get Primary Dataset (Forecast or Past 2 Weeks Actuals)
-  const fetchPrimaryData = async (lat, lon, modeTimeframe) => {
+  const fetchPrimaryData = async (
+    lat: number,
+    lon: number,
+    modeTimeframe: 'forecast' | 'past2weeks'
+  ): Promise<PrimaryData> => {
     const today = new Date();
 
     if (modeTimeframe === 'forecast') {
@@ -54,7 +82,6 @@ export default function WeatherTimeMachine() {
         endDate: addDays(today, 9)
       };
     } else {
-      // Previous 2 weeks (14 days prior to today)
       const pastStart = subDays(today, 14);
       const pastEnd = subDays(today, 1);
       const res = await fetch(
@@ -75,9 +102,16 @@ export default function WeatherTimeMachine() {
   };
 
   // Master calculation engine
-  const computeComparison = async (lat, lon, primaryInfo, cMode, singleOffset, spanCount) => {
+  const computeComparison = async (
+    lat: number,
+    lon: number,
+    primaryInfo: PrimaryData,
+    cMode: 'single' | 'avg',
+    singleOffset: number,
+    spanCount: number
+  ) => {
     const { times, temps, startDate, endDate } = primaryInfo;
-    let historicalDailyAverages = [];
+    let historicalDailyAverages: number[] = [];
 
     if (cMode === 'single') {
       const histStart = subYears(startDate, singleOffset);
@@ -86,7 +120,6 @@ export default function WeatherTimeMachine() {
       if (fetchedTemps.length === 0) throw new Error(`No historical data found for ${singleOffset} years ago.`);
       historicalDailyAverages = fetchedTemps;
     } else {
-      // Multi-year average
       const offsets = Array.from({ length: spanCount }, (_, i) => i + 1);
       const allYears = await Promise.all(
         offsets.map((offset) => {
@@ -96,7 +129,7 @@ export default function WeatherTimeMachine() {
         })
       );
 
-      historicalDailyAverages = times.map((_, dayIndex) => {
+      historicalDailyAverages = times.map((_, dayIndex: number) => {
         let sum = 0;
         let count = 0;
         allYears.forEach((yearArray) => {
@@ -112,7 +145,7 @@ export default function WeatherTimeMachine() {
     let totalPrimary = 0;
     let totalHist = 0;
 
-    const merged = times.map((dateStr, index) => {
+    const merged: MergedChartPoint[] = times.map((dateStr: string, index: number) => {
       const currentDate = new Date(dateStr);
       const primaryVal = temps[index];
       const histVal = historicalDailyAverages[index] ?? primaryVal;
@@ -133,7 +166,7 @@ export default function WeatherTimeMachine() {
   };
 
   // Primary Search Submission
-  const handleSearch = async (e) => {
+  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!query) return;
 
@@ -153,7 +186,7 @@ export default function WeatherTimeMachine() {
       }
 
       const { latitude, longitude, name, admin1, country } = geoData.results[0];
-      const locObj = {
+      const locObj: LocationInfo = {
         lat: latitude,
         lon: longitude,
         name: `${name}${admin1 ? `, ${admin1}` : ''} (${country})`
@@ -164,15 +197,19 @@ export default function WeatherTimeMachine() {
       setPrimaryDailyData(primary);
 
       await computeComparison(latitude, longitude, primary, compareMode, yearsAgo, avgSpan);
-    } catch (err) {
-      setError(err.message || 'Something went wrong fetching data.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Something went wrong fetching data.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   // Timeframe change (Forecast vs Past 2 Weeks)
-  const handleTimeframeChange = async (newTimeframe) => {
+  const handleTimeframeChange = async (newTimeframe: 'forecast' | 'past2weeks') => {
     setTimeframe(newTimeframe);
     if (location) {
       setLoading(true);
@@ -181,8 +218,8 @@ export default function WeatherTimeMachine() {
         const primary = await fetchPrimaryData(location.lat, location.lon, newTimeframe);
         setPrimaryDailyData(primary);
         await computeComparison(location.lat, location.lon, primary, compareMode, yearsAgo, avgSpan);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -190,15 +227,15 @@ export default function WeatherTimeMachine() {
   };
 
   // Switch single year offset
-  const handleSingleYearChange = async (newYears) => {
+  const handleSingleYearChange = async (newYears: number) => {
     setCompareMode('single');
     setYearsAgo(newYears);
     if (location && primaryDailyData) {
       setLoading(true);
       try {
         await computeComparison(location.lat, location.lon, primaryDailyData, 'single', newYears, avgSpan);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -206,15 +243,15 @@ export default function WeatherTimeMachine() {
   };
 
   // Switch average span
-  const handleAvgSpanChange = async (span) => {
+  const handleAvgSpanChange = async (span: number) => {
     setCompareMode('avg');
     setAvgSpan(span);
     if (location && primaryDailyData) {
       setLoading(true);
       try {
         await computeComparison(location.lat, location.lon, primaryDailyData, 'avg', yearsAgo, span);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
       } finally {
         setLoading(false);
       }
