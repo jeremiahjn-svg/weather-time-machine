@@ -44,7 +44,6 @@ interface SingleDayHistoryPoint {
   isCurrent?: boolean;
 }
 
-// Parses "YYYY-MM-DD" as a local calendar date to eliminate UTC midnight timezone rollbacks
 const parseLocalDate = (dateStr: string): Date => {
   const [year, month, day] = dateStr.split('-').map(Number);
   return new Date(year, month - 1, day);
@@ -65,7 +64,7 @@ export default function WeatherTimeMachine() {
   const [error, setError] = useState<string>('');
   const [tempDiff, setTempDiff] = useState<string | null>(null);
 
-  // Drill-down 30-Year Bar Chart State (Controlled by Line Chart)
+  // Drill-down 30-Year Bar Chart State
   const [selectedDayDate, setSelectedDayDate] = useState<string>('');
   const [selectedDayLabel, setSelectedDayLabel] = useState<string>('');
   const [selectedDayPrimaryTemp, setSelectedDayPrimaryTemp] = useState<number | null>(null);
@@ -237,7 +236,7 @@ export default function WeatherTimeMachine() {
     setTempDiff(avgDiff.toFixed(1));
     setChartData(merged);
 
-    if (merged.length > 0) {
+    if (merged.length > 0 && !selectedDayDate) {
       load30YearBarHistory(lat, lon, merged[0].dateStr, merged[0].primaryVal);
     }
   };
@@ -332,6 +331,7 @@ export default function WeatherTimeMachine() {
     }
   };
 
+  // Line Chart Point Selection
   const handlePointSelect = (point: MergedChartPoint) => {
     if (!location) return;
     load30YearBarHistory(location.lat, location.lon, point.dateStr, point.primaryVal);
@@ -357,6 +357,15 @@ export default function WeatherTimeMachine() {
     }
   };
 
+  // Bar Chart Year Selection: Sets the reference year (blue line) to the selected year
+  const handleYearSelect = (selectedYear: number) => {
+    if (selectedYear === currentYear) return;
+    const diff = currentYear - selectedYear;
+    if (diff >= 1 && diff <= 30) {
+      handleSingleYearChange(diff);
+    }
+  };
+
   const comparisonLabel =
     compareMode === 'single'
       ? `${currentYear - yearsAgo} (${yearsAgo}y ago)`
@@ -364,7 +373,6 @@ export default function WeatherTimeMachine() {
 
   const primaryLabel = timeframe === 'forecast' ? '10-Day Forecast High' : 'Past 2-Week Actual High';
 
-  // Stats calculation for the selected day's 30-year bar chart
   const historicalOnly = barData.filter((b) => !b.isCurrent);
 
   const barMax =
@@ -381,6 +389,8 @@ export default function WeatherTimeMachine() {
     historicalOnly.length > 0
       ? Math.round(historicalOnly.reduce((acc, cur) => acc + cur.temp, 0) / historicalOnly.length)
       : null;
+
+  const selectedYearVal = compareMode === 'single' ? currentYear - yearsAgo : null;
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-10 font-sans">
@@ -477,22 +487,31 @@ export default function WeatherTimeMachine() {
 
           {/* Stepper for single year */}
           <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-            <span>Or compare against a single year:</span>
+            <span className="flex items-center gap-1.5">
+              <span>Or compare against a single year:</span>
+              {compareMode === 'single' && (
+                <span className="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 text-[10px] font-semibold border border-sky-500/40">
+                  Active
+                </span>
+              )}
+            </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => handleSingleYearChange(Math.max(1, yearsAgo - 1))}
                 disabled={yearsAgo <= 1}
-                className="px-2 py-1 bg-slate-800 rounded border border-slate-700 disabled:opacity-30"
+                className="px-2 py-1 bg-slate-800 rounded border border-slate-700 disabled:opacity-30 cursor-pointer"
               >
                 ◀
               </button>
-              <span className="font-bold text-sky-300 px-2">{currentYear - yearsAgo} ({yearsAgo}y ago)</span>
+              <span className={`font-bold px-2 ${compareMode === 'single' ? 'text-sky-300' : 'text-slate-400'}`}>
+                {currentYear - yearsAgo} ({yearsAgo}y ago)
+              </span>
               <button
                 type="button"
                 onClick={() => handleSingleYearChange(Math.min(30, yearsAgo + 1))}
                 disabled={yearsAgo >= 30}
-                className="px-2 py-1 bg-slate-800 rounded border border-slate-700 disabled:opacity-30"
+                className="px-2 py-1 bg-slate-800 rounded border border-slate-700 disabled:opacity-30 cursor-pointer"
               >
                 ▶
               </button>
@@ -513,7 +532,7 @@ export default function WeatherTimeMachine() {
               <div>
                 <h2 className="text-xl font-bold text-white">{location.name} Overview</h2>
                 <p className="text-xs text-slate-400">
-                  {primaryLabel} vs. {comparisonLabel} (°F) — <span className="text-sky-400 font-medium">Click any point to drill down into 30-year history</span>
+                  {primaryLabel} vs. <span className="font-semibold text-sky-300">{comparisonLabel}</span> (°F) — <span className="text-sky-400 font-medium">Click any point to drill down into 30-year history</span>
                 </p>
               </div>
               {tempDiff !== null && (
@@ -597,7 +616,7 @@ export default function WeatherTimeMachine() {
                   <Line
                     type="monotone"
                     dataKey="histVal"
-                    name={`Historical Baseline (°F)`}
+                    name={`${comparisonLabel} Baseline (°F)`}
                     stroke="#38bdf8"
                     strokeWidth={3}
                     strokeDasharray="4 4"
@@ -618,11 +637,16 @@ export default function WeatherTimeMachine() {
                   30-Year History: {selectedDayDate ? format(parseLocalDate(selectedDayDate), 'MMMM d') : ''}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Daily high temperatures across every year from {currentYear - 30} to {currentYear}.
+                  Daily high temperatures across every year. <span className="text-sky-400 font-medium">Click any year bar to compare against that year above.</span>
                 </p>
               </div>
               <div className="text-xs bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg">
-                Showing data for <span className="font-bold text-rose-400">{selectedDayLabel}</span>
+                Date: <span className="font-bold text-rose-400">{selectedDayLabel}</span>
+                {compareMode === 'single' && (
+                  <span className="ml-2 pl-2 border-l border-slate-600">
+                    Baseline: <span className="font-bold text-sky-400">{currentYear - yearsAgo}</span>
+                  </span>
+                )}
               </div>
             </div>
 
@@ -676,7 +700,16 @@ export default function WeatherTimeMachine() {
             ) : (
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barData} margin={{ top: 25, right: 10, bottom: 5, left: -20 }}>
+                  <BarChart
+                    data={barData}
+                    margin={{ top: 25, right: 10, bottom: 5, left: -20 }}
+                    onClick={(state: any) => {
+                      if (state && state.activePayload && state.activePayload.length > 0) {
+                        const clicked = state.activePayload[0].payload as SingleDayHistoryPoint;
+                        handleYearSelect(clicked.year);
+                      }
+                    }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                     <XAxis
                       dataKey="year"
@@ -687,7 +720,7 @@ export default function WeatherTimeMachine() {
                     <YAxis stroke="#94a3b8" fontSize={11} domain={['auto', 'auto']} unit="°" />
                     <Tooltip
                       formatter={(val: any) => [`${val}°F`, 'High Temp']}
-                      labelFormatter={(label) => `Year: ${label}`}
+                      labelFormatter={(label) => `Year: ${label} (Click to set baseline)`}
                       contentStyle={{
                         backgroundColor: '#020617',
                         borderColor: '#1e293b',
@@ -708,7 +741,7 @@ export default function WeatherTimeMachine() {
                         }}
                       />
                     )}
-                    <Bar dataKey="temp" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="temp" radius={[4, 4, 0, 0]} className="cursor-pointer">
                       <LabelList
                         dataKey="temp"
                         position="top"
@@ -716,12 +749,31 @@ export default function WeatherTimeMachine() {
                         fontSize={10}
                         formatter={(val: any) => `${val}°`}
                       />
-                      {barData.map((entry) => (
-                        <Cell
-                          key={`cell-${entry.year}`}
-                          fill={entry.isCurrent ? '#f43f5e' : '#38bdf8'}
-                        />
-                      ))}
+                      {barData.map((entry) => {
+                        const isCurrentObservation = entry.isCurrent;
+                        const isSelectedReferenceYear = selectedYearVal === entry.year;
+
+                        let barFill = '#38bdf8'; // standard historical blue
+                        if (isCurrentObservation) {
+                          barFill = '#f43f5e'; // red current
+                        } else if (isSelectedReferenceYear) {
+                          barFill = '#3b82f6'; // darker highlight blue for active baseline year
+                        }
+
+                        return (
+                          <Cell
+                            key={`cell-${entry.year}`}
+                            fill={barFill}
+                            stroke={isSelectedReferenceYear ? '#ffffff' : 'none'}
+                            strokeWidth={isSelectedReferenceYear ? 2 : 0}
+                            className="cursor-pointer transition-opacity hover:opacity-80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleYearSelect(entry.year);
+                            }}
+                          />
+                        );
+                      })}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -736,8 +788,14 @@ export default function WeatherTimeMachine() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 bg-sky-400 rounded-sm inline-block"></span>
-                  Past Years ({currentYear - 30}–{currentYear - 1})
+                  Past Years (Click to set baseline)
                 </span>
+                {compareMode === 'single' && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 bg-blue-500 border border-white rounded-sm inline-block"></span>
+                    Active Baseline ({currentYear - yearsAgo})
+                  </span>
+                )}
               </div>
               <span>Open-Meteo Historical ERA5 Archive</span>
             </div>
