@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { format, subYears, addDays, subDays } from 'date-fns';
+import { format, subYears, subDays } from 'date-fns';
 import {
   LineChart,
   Line,
@@ -43,6 +43,12 @@ interface SingleDayHistoryPoint {
   temp: number;
   isCurrent?: boolean;
 }
+
+// Parses "YYYY-MM-DD" as a local calendar date to eliminate UTC midnight timezone rollbacks
+const parseLocalDate = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
 export default function WeatherTimeMachine() {
   const [query, setQuery] = useState<string>('');
@@ -90,23 +96,27 @@ export default function WeatherTimeMachine() {
     lon: number,
     modeTimeframe: 'forecast' | 'past2weeks'
   ): Promise<PrimaryData> => {
-    const today = new Date();
-
     if (modeTimeframe === 'forecast') {
       const res = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max&forecast_days=10&temperature_unit=fahrenheit&timezone=auto`
       );
       const data = await res.json();
-      if (!data.daily?.time) throw new Error('Could not retrieve forecast records.');
+      if (!data.daily?.time || data.daily.time.length === 0) {
+        throw new Error('Could not retrieve forecast records.');
+      }
+
+      const times: string[] = data.daily.time;
       return {
-        times: data.daily.time,
+        times,
         temps: data.daily.temperature_2m_max,
-        startDate: today,
-        endDate: addDays(today, 9),
+        startDate: parseLocalDate(times[0]),
+        endDate: parseLocalDate(times[times.length - 1]),
       };
     } else {
+      const today = new Date();
       const pastStart = subDays(today, 14);
       const pastEnd = subDays(today, 1);
+
       const res = await fetch(
         `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${format(
           pastStart,
@@ -114,12 +124,16 @@ export default function WeatherTimeMachine() {
         )}&end_date=${format(pastEnd, dateFormat)}&daily=temperature_2m_max&temperature_unit=fahrenheit&timezone=auto`
       );
       const data = await res.json();
-      if (!data.daily?.time) throw new Error('Could not retrieve past 2 weeks actuals.');
+      if (!data.daily?.time || data.daily.time.length === 0) {
+        throw new Error('Could not retrieve past 2 weeks actuals.');
+      }
+
+      const times: string[] = data.daily.time;
       return {
-        times: data.daily.time,
+        times,
         temps: data.daily.temperature_2m_max,
-        startDate: pastStart,
-        endDate: pastEnd,
+        startDate: parseLocalDate(times[0]),
+        endDate: parseLocalDate(times[times.length - 1]),
       };
     }
   };
@@ -130,7 +144,7 @@ export default function WeatherTimeMachine() {
     setSelectedDayPrimaryTemp(primaryTemp);
 
     try {
-      const targetDate = new Date(dateString);
+      const targetDate = parseLocalDate(dateString);
       setSelectedDayLabel(format(targetDate, 'MMM d'));
       const offsets = Array.from({ length: 30 }, (_, i) => 30 - i);
 
@@ -204,7 +218,7 @@ export default function WeatherTimeMachine() {
     let totalHist = 0;
 
     const merged: MergedChartPoint[] = times.map((dateStr: string, index: number) => {
-      const currentDate = new Date(dateStr);
+      const currentDate = parseLocalDate(dateStr);
       const primaryVal = temps[index];
       const histVal = historicalDailyAverages[index] ?? primaryVal;
 
@@ -223,7 +237,6 @@ export default function WeatherTimeMachine() {
     setTempDiff(avgDiff.toFixed(1));
     setChartData(merged);
 
-    // Default to the first day for drill-down view
     if (merged.length > 0) {
       load30YearBarHistory(lat, lon, merged[0].dateStr, merged[0].primaryVal);
     }
@@ -319,7 +332,6 @@ export default function WeatherTimeMachine() {
     }
   };
 
-  // Robust Selection Logic
   const handlePointSelect = (point: MergedChartPoint) => {
     if (!location) return;
     load30YearBarHistory(location.lat, location.lon, point.dateStr, point.primaryVal);
@@ -537,7 +549,7 @@ export default function WeatherTimeMachine() {
                   />
                   <Legend wrapperStyle={{ paddingTop: '8px' }} />
 
-                  {/* Vertical cursor line highlighting the currently selected date */}
+                  {/* Vertical line indicator for the active selected day */}
                   {selectedDayLabel && (
                     <ReferenceLine
                       x={selectedDayLabel}
@@ -603,7 +615,7 @@ export default function WeatherTimeMachine() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
               <div>
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  30-Year History: {selectedDayDate ? format(new Date(selectedDayDate), 'MMMM d') : ''}
+                  30-Year History: {selectedDayDate ? format(parseLocalDate(selectedDayDate), 'MMMM d') : ''}
                 </h3>
                 <p className="text-xs text-slate-400">
                   Daily high temperatures across every year from {currentYear - 30} to {currentYear}.
