@@ -801,8 +801,25 @@ export default function WeatherTimeMachine() {
             </div>
           </div>
         )}
-
+        {/* FOOTER & BUY ME A COFFEE */}
+        <footer className="pt-8 pb-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <div>
+            <span>Temp Trends • Historical Climate Intelligence</span>
+          </div>
+          <div>
+            <a
+              href="https://www.buymeacoffee.com/jeremiahninteman"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#5F7FFF] hover:bg-[#4b6fe8] transition-colors text-white font-medium px-4 py-2 rounded-xl shadow-md text-xs"
+            >
+              <span className="text-base leading-none">☕</span>
+              <span>Buy me a coffee</span>
+            </a>
+          </div>
+        </footer>
       </div>
     </main>
   );
+  
 }
