@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { Inter, Playfair_Display, Bree_Serif } from 'next/font/google';
 import './globals.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
+const breeSerif = Bree_Serif({ subsets: ['latin'], weight: '400', variable: '--font-bree-serif' });
 
 export const metadata: Metadata = {
   title: 'Temp Trends | Historical Weather & Forecast Comparison',
@@ -22,7 +27,12 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
       </head>
-      <body className="bg-slate-950 text-slate-100 antialiased">{children}</body>
+      <body
+        className={`${inter.variable} ${playfair.variable} ${breeSerif.variable} font-sans bg-space-900 text-starlight-200 antialiased min-h-screen bg-cosmic-gradient bg-fixed selection:bg-brass-500 selection:text-space-900`}
+      >
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-brass-400/70 to-transparent" />
+        {children}
+      </body>
     </html>
   );
 }

@@ -17,6 +17,7 @@ import {
   ReferenceLine,
   LabelList,
 } from 'recharts';
+import BuyMeACoffeeButton from './BuyMeACoffeeButton';
 
 interface LocationInfo {
   lat: number;
@@ -393,15 +394,18 @@ export default function WeatherTimeMachine() {
   const selectedYearVal = compareMode === 'single' ? currentYear - yearsAgo : null;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-10 font-sans">
+    <main className="min-h-screen p-4 md:p-10">
       <div className="max-w-5xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white">
-            Temp Trends ⏳
+        <div className="text-center space-y-2 py-6">
+          <h1 className="font-serif text-4xl md:text-6xl font-semibold text-starlight-200 leading-tight">
+            Temp{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brass-400 to-brass-500">
+              Trends
+            </span>
           </h1>
-          <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+          <p className="text-starlight-300 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed">
             Analyze upcoming forecasts and recent temperatures against 30-year historical climate baselines.
           </p>
         </div>
@@ -413,57 +417,57 @@ export default function WeatherTimeMachine() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter City or Zip (e.g. 92120, Austin, Chicago)"
-            className="bg-slate-900 border border-slate-700 focus:border-sky-500 focus:outline-none px-4 py-3 rounded-xl w-full sm:w-96 text-white placeholder-slate-500 shadow-inner"
+            className="bg-space-900 border border-space-700 focus:border-brass-400 focus:outline-none px-4 py-3 rounded-lg w-full sm:w-96 text-starlight-100 placeholder-starlight-400 shadow-inner"
           />
           <button
             type="submit"
             disabled={loading}
-            className="bg-sky-600 hover:bg-sky-500 active:bg-sky-700 transition-colors text-white font-semibold px-6 py-3 rounded-xl shadow-lg disabled:opacity-50 cursor-pointer"
+            className="bg-brass-500 hover:bg-brass-400 active:bg-brass-600 transition-colors text-space-900 font-semibold px-6 py-3 rounded-lg shadow-lg disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Crunching...' : 'Compare History'}
           </button>
         </form>
 
         {/* Controls Panel */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-3xl mx-auto space-y-5">
+        <div className="bg-space-800/90 border border-space-700 rounded-lg p-5 shadow-xl max-w-3xl mx-auto space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* Timeframe Selector */}
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-starlight-400 uppercase tracking-wider">
                 1. Timeframe
               </span>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => handleTimeframeChange('forecast')}
-                  className={`py-2 px-3 text-xs md:text-sm font-semibold rounded-xl border transition-all cursor-pointer ${
+                  className={`py-2 px-3 text-xs md:text-sm font-semibold rounded-lg border transition-all cursor-pointer ${
                     timeframe === 'forecast'
-                      ? 'bg-sky-500/20 border-sky-500 text-sky-300 shadow-md'
-                      : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:bg-slate-800'
+                      ? 'bg-brass-500/20 border-brass-400 text-brass-300 shadow-md'
+                      : 'bg-space-900/60 border-space-700/60 text-starlight-400 hover:bg-space-900'
                   }`}
                 >
-                  10-Day Forecast 🔮
+                  10-Day Forecast
                 </button>
                 <button
                   type="button"
                   onClick={() => handleTimeframeChange('past2weeks')}
-                  className={`py-2 px-3 text-xs md:text-sm font-semibold rounded-xl border transition-all cursor-pointer ${
+                  className={`py-2 px-3 text-xs md:text-sm font-semibold rounded-lg border transition-all cursor-pointer ${
                     timeframe === 'past2weeks'
-                      ? 'bg-sky-500/20 border-sky-500 text-sky-300 shadow-md'
-                      : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:bg-slate-800'
+                      ? 'bg-brass-500/20 border-brass-400 text-brass-300 shadow-md'
+                      : 'bg-space-900/60 border-space-700/60 text-starlight-400 hover:bg-space-900'
                   }`}
                 >
-                  Past 2 Weeks 📅
+                  Past 2 Weeks
                 </button>
               </div>
             </div>
 
             {/* Baseline Presets */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <div className="flex justify-between items-center text-xs font-semibold text-starlight-400 uppercase tracking-wider">
                 <span>2. Multi-Year Baseline</span>
-                {compareMode === 'avg' && <span className="text-sky-400 text-xs">active</span>}
+                {compareMode === 'avg' && <span className="text-brass-400 text-xs">active</span>}
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {[5, 10, 20, 30].map((span) => (
@@ -471,10 +475,10 @@ export default function WeatherTimeMachine() {
                     key={span}
                     type="button"
                     onClick={() => handleAvgSpanChange(span)}
-                    className={`py-2 px-1 text-xs md:text-sm font-semibold rounded-xl border transition-all cursor-pointer ${
+                    className={`py-2 px-1 text-xs md:text-sm font-semibold rounded-lg border transition-all cursor-pointer ${
                       compareMode === 'avg' && avgSpan === span
-                        ? 'bg-sky-500/20 border-sky-500 text-sky-300 shadow-md'
-                        : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        ? 'bg-brass-500/20 border-brass-400 text-brass-300 shadow-md'
+                        : 'bg-space-900/60 border-space-700/60 text-starlight-400 hover:text-starlight-200 hover:bg-space-900'
                     }`}
                   >
                     {span}-Yr
@@ -486,11 +490,11 @@ export default function WeatherTimeMachine() {
           </div>
 
           {/* Stepper for single year */}
-          <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="pt-3 border-t border-space-700 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-starlight-400">
             <span className="flex items-center gap-1.5">
               <span>Or compare against a single year:</span>
               {compareMode === 'single' && (
-                <span className="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 text-[10px] font-semibold border border-sky-500/40">
+                <span className="px-1.5 py-0.5 rounded bg-brass-500/20 text-brass-300 text-[10px] font-semibold border border-brass-400/40">
                   Active
                 </span>
               )}
@@ -500,18 +504,18 @@ export default function WeatherTimeMachine() {
                 type="button"
                 onClick={() => handleSingleYearChange(Math.max(1, yearsAgo - 1))}
                 disabled={yearsAgo <= 1}
-                className="px-2 py-1 bg-slate-800 rounded border border-slate-700 disabled:opacity-30 cursor-pointer"
+                className="px-2 py-1 bg-space-900 rounded border border-space-700 disabled:opacity-30 cursor-pointer hover:border-brass-400/50"
               >
                 ◀
               </button>
-              <span className={`font-bold px-2 ${compareMode === 'single' ? 'text-sky-300' : 'text-slate-400'}`}>
+              <span className={`font-bold px-2 ${compareMode === 'single' ? 'text-brass-300' : 'text-starlight-400'}`}>
                 {currentYear - yearsAgo} ({yearsAgo}y ago)
               </span>
               <button
                 type="button"
                 onClick={() => handleSingleYearChange(Math.min(30, yearsAgo + 1))}
                 disabled={yearsAgo >= 30}
-                className="px-2 py-1 bg-slate-800 rounded border border-slate-700 disabled:opacity-30 cursor-pointer"
+                className="px-2 py-1 bg-space-900 rounded border border-space-700 disabled:opacity-30 cursor-pointer hover:border-brass-400/50"
               >
                 ▶
               </button>
@@ -520,19 +524,19 @@ export default function WeatherTimeMachine() {
         </div>
 
         {error && (
-          <div className="bg-red-950/50 border border-red-800 text-red-200 p-4 rounded-xl text-center">
+          <div className="bg-red-950/50 border border-red-800 text-red-200 p-4 rounded-lg text-center">
             {error}
           </div>
         )}
 
         {/* PRIMARY CONTROLLER (TOP): Multi-Day Range Line Chart */}
         {chartData.length > 0 && location && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+          <div className="bg-space-800 border border-space-700 rounded-lg p-6 shadow-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-space-700 pb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">{location.name} Overview</h2>
-                <p className="text-xs text-slate-400">
-                  {primaryLabel} vs. <span className="font-semibold text-sky-300">{comparisonLabel}</span> (°F) — <span className="text-sky-400 font-medium">Click any point to drill down into 30-year history</span>
+                <h2 className="font-serif text-xl text-starlight-100">{location.name} Overview</h2>
+                <p className="text-xs text-starlight-400">
+                  {primaryLabel} vs. <span className="font-semibold text-brass-300">{comparisonLabel}</span> (°F) — <span className="text-brass-400 font-medium">Click any point to drill down into 30-year history</span>
                 </p>
               </div>
               {tempDiff !== null && (
@@ -555,15 +559,15 @@ export default function WeatherTimeMachine() {
                   margin={{ top: 10, right: 20, bottom: 5, left: -20 }}
                   onClick={handleLineChartClick}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#131A2A" />
                   <XAxis dataKey="dateLabel" stroke="#94a3b8" fontSize={12} />
                   <YAxis stroke="#94a3b8" fontSize={12} domain={['auto', 'auto']} unit="°" />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#020617',
-                      borderColor: '#1e293b',
-                      borderRadius: '0.75rem',
-                      color: '#fff',
+                      backgroundColor: '#020204',
+                      borderColor: '#131A2A',
+                      borderRadius: '0.5rem',
+                      color: '#F8FAFC',
                     }}
                   />
                   <Legend wrapperStyle={{ paddingTop: '8px' }} />
@@ -572,7 +576,7 @@ export default function WeatherTimeMachine() {
                   {selectedDayLabel && (
                     <ReferenceLine
                       x={selectedDayLabel}
-                      stroke="#f43f5e"
+                      stroke="#E5C158"
                       strokeDasharray="4 4"
                       strokeWidth={2}
                     />
@@ -582,7 +586,7 @@ export default function WeatherTimeMachine() {
                     type="monotone"
                     dataKey="primaryVal"
                     name={`${primaryLabel} (°F)`}
-                    stroke="#f43f5e"
+                    stroke="#E5C158"
                     strokeWidth={3}
                     dot={(dotProps: any) => {
                       const { cx, cy, payload } = dotProps;
@@ -593,8 +597,8 @@ export default function WeatherTimeMachine() {
                           cx={cx}
                           cy={cy}
                           r={isSelected ? 7 : 4}
-                          fill={isSelected ? '#f43f5e' : '#fb7185'}
-                          stroke="#ffffff"
+                          fill={isSelected ? '#E5C158' : '#F0DFA0'}
+                          stroke="#F8FAFC"
                           strokeWidth={isSelected ? 2 : 1}
                           className="cursor-pointer transition-all"
                           onClick={(e) => {
@@ -630,20 +634,20 @@ export default function WeatherTimeMachine() {
 
         {/* SECONDARY DRILL-DOWN (BOTTOM): 30-Year History Bar Chart & Stats */}
         {chartData.length > 0 && location && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+          <div className="bg-space-800 border border-space-700 rounded-lg p-6 shadow-2xl space-y-5">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-space-700 pb-4">
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <h3 className="font-serif text-xl text-starlight-100 flex items-center gap-2">
                   30-Year History: {selectedDayDate ? format(parseLocalDate(selectedDayDate), 'MMMM d') : ''}
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Daily high temperatures across every year. <span className="text-sky-400 font-medium">Click any year bar to compare against that year above.</span>
+                <p className="text-xs text-starlight-400">
+                  Daily high temperatures across every year. <span className="text-brass-400 font-medium">Click any year bar to compare against that year above.</span>
                 </p>
               </div>
-              <div className="text-xs bg-slate-800/80 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-lg">
-                Date: <span className="font-bold text-rose-400">{selectedDayLabel}</span>
+              <div className="text-xs bg-space-900/80 border border-space-700 text-starlight-300 px-3 py-1.5 rounded-lg">
+                Date: <span className="font-bold text-brass-400">{selectedDayLabel}</span>
                 {compareMode === 'single' && (
-                  <span className="ml-2 pl-2 border-l border-slate-600">
+                  <span className="ml-2 pl-2 border-l border-space-600">
                     Baseline: <span className="font-bold text-sky-400">{currentYear - yearsAgo}</span>
                   </span>
                 )}
@@ -652,38 +656,38 @@ export default function WeatherTimeMachine() {
 
             {/* SUMMARY STATS BAR */}
             {barData.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-space-950/60 p-3.5 rounded-lg border border-space-700/80">
                 <div className="space-y-0.5">
-                  <div className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                  <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
                     {timeframe === 'forecast' ? 'Forecast' : 'Current Actual'}
                   </div>
-                  <div className="text-xl font-extrabold text-rose-400">
+                  <div className="text-xl font-extrabold text-brass-400">
                     {selectedDayPrimaryTemp !== null ? `${Math.round(selectedDayPrimaryTemp)}°F` : '--'}
                   </div>
                 </div>
 
                 <div className="space-y-0.5">
-                  <div className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                  <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
                     30-Yr Max
                   </div>
                   <div className="text-xl font-extrabold text-orange-400 flex items-baseline gap-1.5">
                     {barMax ? `${barMax.temp}°F` : '--'}
-                    {barMax && <span className="text-xs font-normal text-slate-500">({barMax.year})</span>}
+                    {barMax && <span className="text-xs font-normal text-starlight-400">({barMax.year})</span>}
                   </div>
                 </div>
 
                 <div className="space-y-0.5">
-                  <div className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                  <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
                     30-Yr Min
                   </div>
                   <div className="text-xl font-extrabold text-cyan-400 flex items-baseline gap-1.5">
                     {barMin ? `${barMin.temp}°F` : '--'}
-                    {barMin && <span className="text-xs font-normal text-slate-500">({barMin.year})</span>}
+                    {barMin && <span className="text-xs font-normal text-starlight-400">({barMin.year})</span>}
                   </div>
                 </div>
 
                 <div className="space-y-0.5">
-                  <div className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                  <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
                     30-Yr Mean (Avg)
                   </div>
                   <div className="text-xl font-extrabold text-sky-400">
@@ -694,7 +698,7 @@ export default function WeatherTimeMachine() {
             )}
 
             {loadingBar ? (
-              <div className="h-72 flex items-center justify-center text-slate-400 text-sm animate-pulse">
+              <div className="h-72 flex items-center justify-center text-starlight-400 text-sm animate-pulse">
                 Fetching 30 years of daily readings for {selectedDayDate}...
               </div>
             ) : (
@@ -710,7 +714,7 @@ export default function WeatherTimeMachine() {
                       }
                     }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#131A2A" vertical={false} />
                     <XAxis
                       dataKey="year"
                       stroke="#94a3b8"
@@ -722,10 +726,10 @@ export default function WeatherTimeMachine() {
                       formatter={(val: any) => [`${val}°F`, 'High Temp']}
                       labelFormatter={(label) => `Year: ${label} (Click to set baseline)`}
                       contentStyle={{
-                        backgroundColor: '#020617',
-                        borderColor: '#1e293b',
-                        borderRadius: '0.75rem',
-                        color: '#fff',
+                        backgroundColor: '#020204',
+                        borderColor: '#131A2A',
+                        borderRadius: '0.5rem',
+                        color: '#F8FAFC',
                       }}
                     />
                     {barHistoricalAvg && (
@@ -745,7 +749,7 @@ export default function WeatherTimeMachine() {
                       <LabelList
                         dataKey="temp"
                         position="top"
-                        fill="#cbd5e1"
+                        fill="#CBD5E1"
                         fontSize={10}
                         formatter={(val: any) => `${val}°`}
                       />
@@ -753,18 +757,18 @@ export default function WeatherTimeMachine() {
                         const isCurrentObservation = entry.isCurrent;
                         const isSelectedReferenceYear = selectedYearVal === entry.year;
 
-                        let barFill = '#38bdf8'; // standard historical blue
+                        let barFill = '#38bdf8'; // historical blue
                         if (isCurrentObservation) {
-                          barFill = '#f43f5e'; // red current
+                          barFill = '#E5C158'; // brass — current/forecasted
                         } else if (isSelectedReferenceYear) {
-                          barFill = '#3b82f6'; // darker highlight blue for active baseline year
+                          barFill = '#3b82f6'; // highlighted active baseline year
                         }
 
                         return (
                           <Cell
                             key={`cell-${entry.year}`}
                             fill={barFill}
-                            stroke={isSelectedReferenceYear ? '#ffffff' : 'none'}
+                            stroke={isSelectedReferenceYear ? '#F8FAFC' : 'none'}
                             strokeWidth={isSelectedReferenceYear ? 2 : 0}
                             className="cursor-pointer transition-opacity hover:opacity-80"
                             onClick={(e) => {
@@ -780,10 +784,10 @@ export default function WeatherTimeMachine() {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-800/80">
+            <div className="flex flex-wrap items-center justify-between text-xs text-starlight-400 pt-2 border-t border-space-700/80">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 bg-rose-500 rounded-sm inline-block"></span>
+                  <span className="w-3 h-3 bg-brass-400 rounded-sm inline-block"></span>
                   {currentYear} Current / Forecasted
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -792,7 +796,7 @@ export default function WeatherTimeMachine() {
                 </span>
                 {compareMode === 'single' && (
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 bg-blue-500 border border-white rounded-sm inline-block"></span>
+                    <span className="w-3 h-3 bg-blue-500 border border-starlight-100 rounded-sm inline-block"></span>
                     Active Baseline ({currentYear - yearsAgo})
                   </span>
                 )}
@@ -802,24 +806,13 @@ export default function WeatherTimeMachine() {
           </div>
         )}
         {/* FOOTER & BUY ME A COFFEE */}
-        <footer className="pt-8 pb-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div>
-            <span>Temp Trends • Historical Climate Intelligence</span>
+        <footer className="pt-8 pb-4 border-t border-space-700/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-starlight-400">
+          <div className="font-serif text-lg text-brass-400 tracking-wide">
+            Temp Trends
           </div>
-          <div>
-            <a
-              href="https://www.buymeacoffee.com/jeremiahninteman"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#5F7FFF] hover:bg-[#4b6fe8] transition-colors text-white font-medium px-4 py-2 rounded-xl shadow-md text-xs"
-            >
-              <span className="text-base leading-none">☕</span>
-              <span>Buy me a coffee</span>
-            </a>
-          </div>
+          <BuyMeACoffeeButton />
         </footer>
       </div>
     </main>
   );
-  
 }
